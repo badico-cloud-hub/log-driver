@@ -51,7 +51,7 @@ func (q *Queue) SendMessage(queueURL string, message string) error {
 	return nil
 }
 
-func (q *Queue) ConsumeMessages(queueURL string) error {
+func (q *Queue) ConsumeMessages(queueURL, message string) error {
 	fmt.Println("========================")
 	fmt.Println("SendMessage:", queueURL)
 	fmt.Println("========================")
