@@ -21,9 +21,7 @@ type Logger struct {
 
 func (l *Logger) Debugln(message string) {
 	logMessage := NewLogMessage(l, message, "DEBUG")
-	go func() {
-		l.MessageChan <- logMessage
-	}()
+	l.MessageChan <- logMessage
 	fmt.Println(logMessage)
 }
 
@@ -34,9 +32,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 
 func (l *Logger) Infoln(message string) {
 	logMessage := NewLogMessage(l, message, "INFO")
-	go func() {
-		l.MessageChan <- logMessage
-	}()
+	l.MessageChan <- logMessage
 	fmt.Println(logMessage)
 }
 
@@ -47,9 +43,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 func (l *Logger) Errorln(message string) {
 	logMessage := NewLogMessage(l, message, "ERROR")
-	go func() {
-		l.MessageChan <- logMessage
-	}()
+	l.MessageChan <- logMessage
 	fmt.Println(logMessage)
 }
 
@@ -60,9 +54,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 
 func (l *Logger) Warnln(message string) {
 	logMessage := NewLogMessage(l, message, "WARN")
-	go func() {
-		l.MessageChan <- logMessage
-	}()
+	l.MessageChan <- logMessage
 	fmt.Println(logMessage)
 }
 
@@ -80,9 +72,7 @@ func (l *Logger) AddEvent(evt LogEventEmbed) {
 	evt.ID = ID
 	l.Events = append(l.Events, evt)
 	fmt.Println(l.Events)
-	go func() {
-		l.EventChan <- NewLogEventMessage(ID, l, evt)
-	}()
+	l.EventChan <- NewLogEventMessage(ID, l, evt)
 	fmt.Println(evt)
 }
 

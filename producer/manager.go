@@ -14,9 +14,9 @@ type LoggerManager struct {
 	LogContext       logger.LogContext
 }
 
-func (lm *LoggerManager) Setup(region, clientId, clientSecret, logIngestionURL, eventIngestionURL string) error {
+func (lm *LoggerManager) Setup(username, pass, serverUrl string) error {
 	queue := infra.NewQueue()
-	err := queue.Setup(region, clientId, clientSecret)
+	err := queue.Setup(username, pass, serverUrl)
 	if err != nil {
 		fmt.Println("============================================")
 		fmt.Println("WARN: CLOUDLOG ENGINE NOT WORKING")
@@ -31,8 +31,6 @@ func (lm *LoggerManager) Setup(region, clientId, clientSecret, logIngestionURL, 
 
 	// create log producer with channels created
 	producer := NewLogProducer(
-		logIngestionURL,
-		eventIngestionURL,
 		queue,
 		eventChan,
 		logChan,

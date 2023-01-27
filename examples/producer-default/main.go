@@ -18,12 +18,11 @@ func main() {
 	})
 
 	err := myProducerManager.Setup(
-		"us-east-2",
-		"AKIAR7DSGC74ED3U7H43",
-		"Af2D5l3+MZnD2MVYSvYCFRgWwbQSgN5COdcClwDc",
-		"https://sqs.us-east-2.amazonaws.com/135530944504/CloudLogIngestionMessageLog",
-		"https://sqs.us-east-2.amazonaws.com/135530944504/CloudLogIngestionEventLog",
+		"USER",
+		"PASS",
+		"URL",
 	)
+
 	if err != nil {
 		fmt.Println("============================================")
 		fmt.Println("WARN: CLOUDLOG ENGINE NOT WORKING")
