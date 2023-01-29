@@ -17,23 +17,31 @@ type Queue struct {
 	EventQ amqp.Queue
 }
 
+type callbackFunc func(msg amqp.Delivery)
+
 func NewQueue() *Queue {
 	return &Queue{}
 }
 
-func (q *Queue) Setup(username, password, serverUrl string) error {
-	uri := fmt.Sprintf("amqps://%s:%s@%s", username, password, serverUrl)
+func (q *Queue) dial(username, password, serverUrl string) {
+	uri := fmt.Sprintf("amqp://%s:%s@%s", username, password, serverUrl)
 	fmt.Println(uri)
 	conn, err := amqp.Dial(uri)
 	if err != nil {
 		log.Panicf("%s: %s", "Failed to connect to RabbitMQ", err)
 	}
-	// defer conn.Close()
-
 	q.conn = conn
+
 	ch, err := q.conn.Channel()
 	q.ch = ch
-	logQ, err := ch.QueueDeclare(
+}
+
+func (q *Queue) Setup(username, password, serverUrl string) error {
+
+	// defer conn.Close()
+	q.dial(username, password, serverUrl)
+
+	logQ, err := q.ch.QueueDeclare(
 		"LogMessages", // name
 		true,          // durable
 		false,         // delete when unused
@@ -44,8 +52,10 @@ func (q *Queue) Setup(username, password, serverUrl string) error {
 	q.LogQ = logQ
 
 	// err check
-
-	eventQ, err := ch.QueueDeclare(
+	if err != nil {
+		log.Panicf("%s: %s", "Failed to connect to RabbitMQ", err)
+	}
+	eventQ, err := q.ch.QueueDeclare(
 		"EventMessages", // name
 		true,            // durable
 		false,           // delete when unused
@@ -55,6 +65,9 @@ func (q *Queue) Setup(username, password, serverUrl string) error {
 	)
 
 	// err check
+	if err != nil {
+		log.Panicf("%s: %s", "Failed to connect to RabbitMQ", err)
+	}
 
 	q.EventQ = eventQ
 	return nil
@@ -90,6 +103,27 @@ func (q *Queue) SendMessage(nameq string, data interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (q *Queue) Consume(nameq string, callback callbackFunc) {
+	// Consumir a fila
+	msgs, err := q.ch.Consume(
+		nameq, // queue
+		"",    // consumer
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
+	)
+
+	if err != nil {
+		log.Fatalf("Falha ao consumir a fila: %s", err)
+	}
+	// Loop para consumir as mensagens
+	for msg := range msgs {
+		callback(msg)
+	}
 }
 
 // func (q *Queue) ConsumeMessages(queueURL string) error {
