@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -23,8 +24,16 @@ func NewQueue() *Queue {
 	return &Queue{}
 }
 
+func getProtocol(env string) string {
+	if env == "PROD" {
+		return "amqps"
+	}
+	return "amqp"
+}
+
 func (q *Queue) dial(username, password, serverUrl string) {
-	uri := fmt.Sprintf("amqp://%s:%s@%s", username, password, serverUrl)
+
+	uri := fmt.Sprintf("%s://%s:%s@%s", getProtocol(os.Getenv("ENV")), username, password, serverUrl)
 	fmt.Println(uri)
 	conn, err := amqp.Dial(uri)
 	if err != nil {
