@@ -18,9 +18,9 @@ func main() {
 	})
 
 	err := myProducerManager.Setup(
-		"USER",
-		"PASS",
-		"URL",
+		"user",
+		"password",
+		"localhost:5672",
 	)
 
 	if err != nil {
@@ -35,6 +35,7 @@ func main() {
 	defer func() {
 		myProducerManager.StopProducer()
 	}()
+
 	logger1 := myProducerManager.NewLogger("logger 1 - some session id", "ip")
 	logger2 := myProducerManager.NewLogger("logger 2 - some session id", "ip")
 
