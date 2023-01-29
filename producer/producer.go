@@ -7,6 +7,7 @@ import (
 	"github.com/badico-cloud-hub/log-driver/logger"
 )
 
+// TODO : CLOSE channel + CLOSE connection
 type LogProducer struct {
 	EventMessageChan chan logger.LogEventMessage
 	LogMessageChan   chan logger.LogMessage
