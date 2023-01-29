@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"time"
 
 	"github.com/badico-cloud-hub/log-driver/infra"
@@ -13,11 +14,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func getEnvOrDefault(env, deflt string) string {
+	v := os.Getenv(env)
+	if v == "" {
+		return deflt
+	}
+	return v
+}
+
 func main() {
 	// Conectar ao servidor RabbitMQ
 	infinite := make(chan bool)
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.NewClient(
+		options.Client().ApplyURI(
+			getEnvOrDefault("MONGODB_URL", "mongodb://localhost:27017"),
+		),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,9 +52,9 @@ func main() {
 
 	q := infra.NewQueue()
 	q.Setup(
-		"user",
-		"password",
-		"localhost:5672",
+		getEnvOrDefault("RABBITMQ_USERNAME", "user"),
+		getEnvOrDefault("RABBITMQ_PASSWORD", "password"),
+		getEnvOrDefault("RABBITMQ_URL", "localhost:5672"),
 	)
 
 	go q.Consume("EventMessages", func(msg amqp.Delivery) {
