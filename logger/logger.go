@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -17,11 +18,34 @@ type Logger struct {
 
 	MessageChan chan LogMessage
 	EventChan   chan LogEventMessage
+	async       bool
+}
+
+func (l *Logger) sendLogMessageToChannel(lm LogMessage) {
+	if l.async == true {
+		go func() {
+			l.MessageChan <- lm
+		}()
+		return
+	}
+	l.MessageChan <- lm
+	return
+}
+
+func (l *Logger) sendEventMessageToChannel(em LogEventMessage) {
+	if l.async == true {
+		go func() {
+			l.EventChan <- em
+		}()
+		return
+	}
+	l.EventChan <- em
+	return
 }
 
 func (l *Logger) Debugln(message string) {
 	logMessage := NewLogMessage(l, message, "DEBUG")
-	l.MessageChan <- logMessage
+	l.sendLogMessageToChannel(logMessage)
 	fmt.Println(logMessage)
 }
 
@@ -32,7 +56,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 
 func (l *Logger) Infoln(message string) {
 	logMessage := NewLogMessage(l, message, "INFO")
-	l.MessageChan <- logMessage
+	l.sendLogMessageToChannel(logMessage)
 	fmt.Println(logMessage)
 }
 
@@ -43,7 +67,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 func (l *Logger) Errorln(message string) {
 	logMessage := NewLogMessage(l, message, "ERROR")
-	l.MessageChan <- logMessage
+	l.sendLogMessageToChannel(logMessage)
 	fmt.Println(logMessage)
 }
 
@@ -54,7 +78,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 
 func (l *Logger) Warnln(message string) {
 	logMessage := NewLogMessage(l, message, "WARN")
-	l.MessageChan <- logMessage
+	l.sendLogMessageToChannel(logMessage)
 	fmt.Println(logMessage)
 }
 
@@ -72,12 +96,19 @@ func (l *Logger) AddEvent(evt LogEventEmbed) {
 	evt.ID = ID
 	l.Events = append(l.Events, evt)
 	fmt.Println(l.Events)
-	l.EventChan <- NewLogEventMessage(ID, l, evt)
+	l.sendEventMessageToChannel(NewLogEventMessage(ID, l, evt))
 	fmt.Println(evt)
+}
+func isAsyncLogger() bool {
+	if os.Getenv("LOGGER_MODE") == "async" {
+		return true
+	}
+	return false
 }
 
 func NewLogger(SessionID, IP string, lctx LogContext, mc chan LogMessage, ec chan LogEventMessage) Logger {
 	ID := primitive.NewObjectID()
+	async := isAsyncLogger()
 	logger := Logger{
 		ID:        ID,
 		SessionID: SessionID,
@@ -89,6 +120,7 @@ func NewLogger(SessionID, IP string, lctx LogContext, mc chan LogMessage, ec cha
 		TraceRefs:   make([]string, 0),
 		MessageChan: mc,
 		EventChan:   ec,
+		async:       async,
 	}
 	logger.AddTraceRef(fmt.Sprintf("logger:%s", ID.Hex()))
 	return logger
