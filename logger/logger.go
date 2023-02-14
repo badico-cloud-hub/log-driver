@@ -19,6 +19,15 @@ type Logger struct {
 	MessageChan chan LogMessage
 	EventChan   chan LogEventMessage
 	async       bool
+	local       bool
+}
+
+func (l *Logger) printAndSend(lm LogMessage) {
+	fmt.Println(lm)
+	if l.local {
+		return
+	}
+	l.sendLogMessageToChannel(lm)
 }
 
 func (l *Logger) sendLogMessageToChannel(lm LogMessage) {
@@ -44,9 +53,7 @@ func (l *Logger) sendEventMessageToChannel(em LogEventMessage) {
 }
 
 func (l *Logger) Debugln(message string) {
-	logMessage := NewLogMessage(l, message, "DEBUG")
-	l.sendLogMessageToChannel(logMessage)
-	fmt.Println(logMessage)
+	l.printAndSend(NewLogMessage(l, message, "DEBUG"))
 }
 
 func (l *Logger) Infof(format string, v ...interface{}) {
@@ -55,9 +62,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 }
 
 func (l *Logger) Infoln(message string) {
-	logMessage := NewLogMessage(l, message, "INFO")
-	l.sendLogMessageToChannel(logMessage)
-	fmt.Println(logMessage)
+	l.printAndSend(NewLogMessage(l, message, "INFO"))
 }
 
 func (l *Logger) Debugf(format string, v ...interface{}) {
@@ -66,9 +71,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Errorln(message string) {
-	logMessage := NewLogMessage(l, message, "ERROR")
-	l.sendLogMessageToChannel(logMessage)
-	fmt.Println(logMessage)
+	l.printAndSend(NewLogMessage(l, message, "ERROR"))
 }
 
 func (l *Logger) Errorf(format string, v ...interface{}) {
@@ -77,9 +80,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Warnln(message string) {
-	logMessage := NewLogMessage(l, message, "WARN")
-	l.sendLogMessageToChannel(logMessage)
-	fmt.Println(logMessage)
+	l.printAndSend(NewLogMessage(l, message, "WARN"))
 }
 
 func (l *Logger) Warnf(format string, v ...interface{}) {
@@ -106,9 +107,17 @@ func isAsyncLogger() bool {
 	return false
 }
 
+func isLocalLogger() bool {
+	if os.Getenv("LOCAL_MODE") != "" {
+		return true
+	}
+	return false
+}
+
 func NewLogger(SessionID, IP string, lctx LogContext, mc chan LogMessage, ec chan LogEventMessage) Logger {
 	ID := primitive.NewObjectID()
 	async := isAsyncLogger()
+	local := isLocalLogger()
 	logger := Logger{
 		ID:        ID,
 		SessionID: SessionID,
@@ -121,6 +130,7 @@ func NewLogger(SessionID, IP string, lctx LogContext, mc chan LogMessage, ec cha
 		MessageChan: mc,
 		EventChan:   ec,
 		async:       async,
+		local:       local,
 	}
 	logger.AddTraceRef(fmt.Sprintf("logger:%s", ID.Hex()))
 	return logger
